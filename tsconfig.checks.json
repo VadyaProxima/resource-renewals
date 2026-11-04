@@ -5,12 +5,7 @@
     "moduleResolution": "NodeNext",
     "noEmit": true,
     "types": ["node"],
-    "lib": ["ES2023", "DOM"]
+    "lib": ["ES2023"]
   },
-  "include": [
-    "scripts/**/*.ts",
-    "apps/api/test/**/*.ts",
-    "tests/**/*.ts",
-    "playwright.config.ts"
-  ]
+  "include": ["scripts/**/*.ts", "apps/api/test/**/*.ts"]
 }

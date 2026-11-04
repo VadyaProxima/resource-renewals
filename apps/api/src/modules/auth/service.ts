@@ -11,10 +11,10 @@ export class AuthService {
   private dummy = hashPassword("not-a-real-password");
   constructor(private pool: Pool) {}
   async login(login: string, password: string) {
-    const { rows } = await this.pool.query(
-      "SELECT id,password_hash FROM users WHERE login=$1",
-      [login],
-    );
+    const { rows } = await this.pool.query<{
+      id: string;
+      password_hash: string;
+    }>("SELECT id,password_hash FROM users WHERE login=$1", [login]);
     const valid = await verifyPassword(
       password,
       rows[0]?.password_hash ?? (await this.dummy),

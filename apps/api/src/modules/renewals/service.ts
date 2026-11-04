@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
-import type { User, Renewal, Resource } from "@renewals/contracts";
+import type {
+  User,
+  Renewal,
+  Resource,
+  HistoryEntry,
+  RenewalDetail,
+} from "@renewals/contracts";
 import { transaction, type Client, type Pool } from "../../db/pool.js";
 import { requireCondition } from "../../shared/errors.js";
 const selectRenewals = `SELECT n.*,r.name resource_name,u.name creator_name FROM renewals n JOIN resources r ON r.id=n.resource_id JOIN users u ON u.id=n.created_by`;
@@ -66,13 +72,18 @@ export class RenewalService {
       "Нет доступа к пространству",
     );
     const entries = (
-      await this.pool.query(
+      await this.pool.query<HistoryEntry>(
         `SELECT h.id::text,h.from_status,h.to_status,h.message,h.created_at,COALESCE(u.name,'Фоновый обработчик') actor_name FROM renewal_history h LEFT JOIN users u ON u.id=h.actor_id WHERE h.renewal_id=$1 ORDER BY h.id`,
         [id],
       )
     ).rows;
     const job = (
-      await this.pool.query(
+      await this.pool.query<
+        Pick<
+          RenewalDetail,
+          "post_attempts" | "cycle_attempts" | "next_attempt_at"
+        >
+      >(
         "SELECT post_attempts,cycle_attempts,next_attempt_at FROM renewal_jobs WHERE renewal_id=$1",
         [id],
       )
@@ -91,7 +102,7 @@ export class RenewalService {
       const resource = await this.resource(user, resourceId, db, true);
       const id = randomUUID();
       const row = (
-        await db.query(
+        await db.query<Renewal>(
           `INSERT INTO renewals(id,resource_id,workspace_id,created_by,old_expires_on,new_expires_on,amount_minor,currency,operation_key) VALUES($1,$2,$3,$4,$5::date,$5::date+30,$6,$7,$8) RETURNING *`,
           [
             id,
@@ -167,8 +178,8 @@ export class RenewalService {
         );
       const status = action === "reject" ? "rejected" : "processing";
       await db.query(
-        "UPDATE renewals SET status=$2,approved_by=$3 WHERE id=$1",
-        [id, status, user.id],
+        "UPDATE renewals SET status=$2,approved_by=CASE WHEN $4 THEN approved_by ELSE $3::uuid END WHERE id=$1",
+        [id, status, user.id, action === "retry"],
       );
       await history(
         db,

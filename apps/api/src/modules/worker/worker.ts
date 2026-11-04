@@ -39,7 +39,7 @@ export class Worker {
   }
   async tick() {
     const candidates = (
-      await this.pool.query(
+      await this.pool.query<{ renewal_id: string }>(
         `SELECT renewal_id FROM renewal_jobs WHERE NOT done AND next_attempt_at<=now() ORDER BY next_attempt_at LIMIT 20`,
       )
     ).rows;
@@ -49,12 +49,13 @@ export class Worker {
     const db = await this.pool.connect();
     let locked = false;
     try {
-      locked = (
-        await db.query(
-          "SELECT pg_try_advisory_lock(48123,hashtext($1)) locked",
-          [id],
-        )
-      ).rows[0].locked;
+      locked =
+        (
+          await db.query<{ locked: boolean }>(
+            "SELECT pg_try_advisory_lock(48123,hashtext($1)) locked",
+            [id],
+          )
+        ).rows[0]?.locked ?? false;
       if (!locked) return;
       const row = (
         await db.query<Job>(
@@ -153,11 +154,12 @@ export class Worker {
         row.resource_id,
       ]);
       const current = (
-        await db.query("SELECT status FROM renewals WHERE id=$1 FOR UPDATE", [
-          row.id,
-        ])
+        await db.query<Pick<Renewal, "status">>(
+          "SELECT status FROM renewals WHERE id=$1 FOR UPDATE",
+          [row.id],
+        )
       ).rows[0];
-      if (current.status !== "processing") return;
+      if (current?.status !== "processing") return;
       // Set the fixed snapshot date, never add 30 to a mutable current date.
       await db.query("UPDATE resources SET expires_on=$2 WHERE id=$1", [
         row.resource_id,

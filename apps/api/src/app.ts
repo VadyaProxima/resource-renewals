@@ -76,13 +76,14 @@ export async function createApp(pool: Pool, config: Config, logging = false) {
       .code(500)
       .send({ message: "Внутренняя ошибка. Попробуйте позже" });
   });
-  app.addHook("onRequest", async (req) => {
+  app.addHook("onRequest", (req, _reply, done) => {
     if (
       ["POST", "PUT", "PATCH", "DELETE"].includes(req.method) &&
       req.headers.origin &&
       req.headers.origin !== config.origin
     )
-      throw new HttpError(403, "Недопустимый источник запроса");
+      done(new HttpError(403, "Недопустимый источник запроса"));
+    else done();
   });
   app.get("/api/health", async () => {
     await pool.query("SELECT 1");
@@ -110,19 +111,19 @@ export async function createApp(pool: Pool, config: Config, logging = false) {
       return user;
     },
   );
-  await app.register(async (secured) => {
+  await app.register((secured, _options, done) => {
     secured.addHook("onRequest", async (req, reply) => {
       reply.header("Cache-Control", "no-store");
       req.user = await auth.authenticate(req.cookies.session);
     });
-    secured.get("/api/auth/me", async (req) => req.user);
+    secured.get("/api/auth/me", (req) => req.user);
     secured.post("/api/auth/logout", async (req, reply) => {
       await auth.logout(req.cookies.session!);
       reply.clearCookie("session", { path: "/" });
       return { ok: true };
     });
     secured.get("/api/resources", async (req) => renewals.resources(req.user));
-    secured.get("/api/resources/:id", async (req) =>
+    secured.get("/api/resources/:id", (req) =>
       renewals.resource(
         req.user,
         z.object({ id: z.string().min(1).max(255) }).parse(req.params).id,
@@ -156,6 +157,7 @@ export async function createApp(pool: Pool, config: Config, logging = false) {
           .parse(req.body ?? {});
         return renewals.action(req.user, idSchema.parse(req.params).id, action);
       });
+    done();
   });
   return app;
 }

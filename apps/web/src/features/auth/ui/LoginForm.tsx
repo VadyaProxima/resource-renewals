@@ -22,11 +22,7 @@ export function LoginForm() {
         <LockKeyhole size={26} />
       </div>
       <p className="eyebrow">РАБОЧЕЕ ПРОСТРАНСТВО</p>
-      <h1>
-        Все продления.
-        <br />
-        Под контролем.
-      </h1>
+      <h1>Вход в приложение</h1>
       <p className="muted">
         Войдите, чтобы работать с ресурсами
         <br />и заявками вашего пространства.

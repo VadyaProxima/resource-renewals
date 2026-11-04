@@ -22,7 +22,7 @@ client.getQueryCache().subscribe((event) => {
     event.action.type === "error" &&
     event.action.error instanceof ApiError &&
     event.action.error.status === 401 &&
-    event.query.queryKey[0] !== "session"
+    (event.query.queryKey as readonly unknown[])[0] !== "session"
   ) {
     void updateSession(client, null);
   }

@@ -1,8 +1,8 @@
 import { useState, type KeyboardEvent } from "react";
-import { Layers3, Search } from "lucide-react";
+import { Layers3 } from "lucide-react";
 import type { User } from "@/entities/session";
 import { useResources } from "@/entities/resource";
-import { useRenewals, statusLabel } from "@/entities/renewal";
+import { useRenewals, type Status } from "@/entities/renewal";
 import { CreateRenewal } from "@/features/create-renewal";
 import { LogoutButton } from "@/features/auth";
 import { Loading, ErrorMessage } from "@/shared/ui";
@@ -15,17 +15,12 @@ export function WorkspacePage({ user }: { user: User }) {
   const renewals = useRenewals();
   const [tab, setTab] = useState<Tab>("resources");
   const [selected, setSelected] = useState<string | null>(null);
-  const [filter, setFilter] = useState("");
   const [resourceHistory, setResourceHistory] = useState<string | null>(null);
   const rows = renewals.data ?? [];
-  const count = (status: string) =>
+  const count = (status: Status) =>
     renewals.data ? rows.filter((r) => r.status === status).length : "—";
   const filtered = rows.filter(
-    (r) =>
-      (!resourceHistory || r.resource_id === resourceHistory) &&
-      `${r.resource_name} ${r.resource_id} ${statusLabel[r.status]}`
-        .toLowerCase()
-        .includes(filter.toLowerCase()),
+    (r) => !resourceHistory || r.resource_id === resourceHistory,
   );
   function changeTab(value: Tab) {
     setTab(value);
@@ -116,17 +111,6 @@ export function WorkspacePage({ user }: { user: User }) {
                 </button>
               ))}
             </div>
-            {tab === "renewals" && (
-              <label className="search">
-                <Search size={16} />
-                <input
-                  aria-label="Поиск заявок"
-                  placeholder="Найти заявку…"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                />
-              </label>
-            )}
           </div>
           <div
             id="list-panel"
@@ -145,7 +129,6 @@ export function WorkspacePage({ user }: { user: User }) {
                   onHistory={(id) => {
                     setResourceHistory(id);
                     setTab("renewals");
-                    setFilter("");
                   }}
                 />
               )
@@ -167,11 +150,7 @@ export function WorkspacePage({ user }: { user: User }) {
                 ) : renewals.error ? (
                   <ErrorMessage error={renewals.error} />
                 ) : (
-                  <RenewalTable
-                    renewals={filtered}
-                    searching={!!filter}
-                    onSelect={setSelected}
-                  />
+                  <RenewalTable renewals={filtered} onSelect={setSelected} />
                 )}
               </>
             )}

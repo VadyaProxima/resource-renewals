@@ -79,23 +79,16 @@ export function ResourceTable({
 }
 export function RenewalTable({
   renewals,
-  searching,
   onSelect,
 }: {
   renewals: Renewal[];
-  searching: boolean;
   onSelect: (id: string) => void;
 }) {
   if (!renewals.length)
     return (
       <div className="empty">
         <Layers3 size={30} />
-        <h3>{searching ? "Ничего не найдено" : "Заявок пока нет"}</h3>
-        <p>
-          {searching
-            ? "Попробуйте другой поисковый запрос."
-            : "Пока нет заявок на продление."}
-        </p>
+        <h3>Заявок пока нет</h3>
       </div>
     );
   return (

@@ -15,13 +15,18 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
       ...options?.headers,
     },
   });
-  const data = await response
+  const data: unknown = await response
     .json()
     .catch(() => ({ message: "Сервер вернул некорректный ответ" }));
   if (!response.ok)
     throw new ApiError(
       response.status,
-      data.message ?? "Не удалось выполнить запрос",
+      (typeof data === "object" &&
+      data !== null &&
+      "message" in data &&
+      typeof data.message === "string"
+        ? data.message
+        : undefined) ?? "Не удалось выполнить запрос",
     );
   return data as T;
 }

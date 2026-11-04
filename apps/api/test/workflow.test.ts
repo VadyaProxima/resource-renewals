@@ -519,6 +519,30 @@ test("POST timeout/offline provider consumes exactly three attempts and releases
     "2027-03-01",
   );
 });
+test("an approver can retry their own request approved by someone else without replacing the approver", async () => {
+  const row = await create("res-a-01", "universal.alpha");
+  await approve(row.id);
+  const approved = (await detail(row.id)).approved_by;
+  const worker = new Worker(
+    pool,
+    { lookup: () => Promise.resolve(null), send: () => Promise.resolve(null) },
+    150,
+    25,
+  );
+  for (let i = 0; i < 4; i++) {
+    await due(row.id);
+    await worker.tick();
+  }
+  assert.equal((await detail(row.id)).status, "attention");
+  assert.equal(
+    (await call("POST", `/renewals/${row.id}/retry`, "universal.alpha"))
+      .statusCode,
+    200,
+  );
+  assert.equal((await detail(row.id)).approved_by, approved);
+  assert.equal((await detail(row.id)).operation_key, row.operation_key);
+});
+
 test("logout revokes server-side session", async () => {
   assert.equal(
     (await call("POST", "/auth/logout", "initiator.alpha")).statusCode,

@@ -221,22 +221,6 @@ small {
   font-size: 11px;
   color: var(--muted);
 }
-.search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid #405253;
-  padding: 9px 10px;
-  border-radius: 7px;
-  color: var(--muted);
-}
-.search input {
-  background: none;
-  border: 0;
-  width: 145px;
-  color: #f5f7f7;
-  font-size: 12px;
-}
 .table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -461,7 +445,7 @@ td strong {
 .modal form > .button {
   width: 100%;
 }
-label:not(.search) {
+label {
   display: flex;
   flex-direction: column;
   gap: 9px;
@@ -469,7 +453,7 @@ label:not(.search) {
   color: #cad7d8;
   margin: 20px 0;
 }
-input:not(.search input),
+input,
 select {
   border: 1px solid #4c6062;
   background: #132426;
@@ -734,13 +718,6 @@ select {
   .tabs {
     height: 65px;
     gap: 22px;
-  }
-  .search {
-    margin-bottom: 16px;
-    width: 100%;
-  }
-  .search input {
-    width: 100%;
   }
   .table-wrap {
     overflow: visible;
