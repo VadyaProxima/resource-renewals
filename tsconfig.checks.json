@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": [
+    "scripts/**/*.ts",
+    "apps/api/test/**/*.ts",
+    "tests/**/*.ts",
+    "playwright.config.ts"
+  ]
+}
